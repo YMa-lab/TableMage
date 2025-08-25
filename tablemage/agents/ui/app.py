@@ -4,6 +4,7 @@ from typing import Literal
 from pathlib import Path
 import sys
 import matplotlib
+import asyncio
 
 ui_path = Path(__file__).parent.resolve()
 path_to_add = str(ui_path.parent.parent.parent)
@@ -35,7 +36,7 @@ def chat(msg: str) -> str:
         return "No dataset uploaded. Please upload a dataset first."
 
     else:
-        return agent.chat(msg)
+        return asyncio.run(agent.chat(msg))
 
 
 def get_analysis():
@@ -181,8 +182,6 @@ class ChatDA_UserInterface:
         self,
         split_seed: int | None = None,
         system_prompt: str | None = None,
-        react: bool | None = None,
-        memory_type: Literal["buffer", "vector"] | None = None,
         memory_size: int | None = None,
         tool_rag: bool | None = None,
         tool_rag_top_k: int | None = None,
@@ -199,15 +198,6 @@ class ChatDA_UserInterface:
 
         system_prompt : str | None
             If None, default system prompt is used.
-
-        react : bool | None
-            If None, default ReAct flag is used. \
-            If True, ReAct is used. If False, ReAct is not used.
-
-        memory_type : Literal["buffer", "vector"] | None
-            If None, default memory type is used. \
-            If "buffer", buffer memory is used. \
-            If "vector", vector plus buffer memory is used.
 
         memory_size : int | None
             If None, default memory size is used.
@@ -241,8 +231,6 @@ class ChatDA_UserInterface:
         chatda_kwargs = {
             "split_seed": split_seed,
             "system_prompt": system_prompt,
-            "react": react,
-            "memory_type": memory_type,
             "memory_size": memory_size,
             "tool_rag": tool_rag,
             "tool_rag_top_k": tool_rag_top_k,

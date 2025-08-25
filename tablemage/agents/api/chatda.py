@@ -1,5 +1,6 @@
 import pandas as pd
 from typing import Literal
+import asyncio
 from .._src import (
     build_tablemage_analyzer,
     StorageManager,
@@ -25,8 +26,6 @@ class ChatDA:
         test_size: float = 0.2,
         split_seed: int = 42,
         system_prompt: str = DEFAULT_SYSTEM_PROMPT,
-        react: bool = False,
-        memory_type: Literal["buffer", "vector"] = "vector",
         memory_size: int = 3000,
         tool_rag: bool = True,
         tool_rag_top_k: int = 5,
@@ -53,12 +52,6 @@ class ChatDA:
 
         system_prompt : str
             The system prompt to use for the LLM. Default is provided.
-
-        react: bool
-            If True, the agent will employ the ReAct framework. Default is False.
-
-        memory_type : Literal["buffer", "vector"]
-            The type of memory to use. Default is "vector".
 
         memory_size : int
             The size of the memory to use. Token limit synonym. Default is 3000.
@@ -112,8 +105,6 @@ class ChatDA:
         self._single_agent = SingleAgent(
             llm=options.llm_build_function(),
             context=self._context,
-            react=react,
-            memory=memory_type,
             memory_size=memory_size,
             tool_rag_top_k=tool_rag_top_k,
             tool_rag=tool_rag,
@@ -126,7 +117,7 @@ class ChatDA:
             f"Agent initialized. Agent type: {self._single_agent.__class__.__name__}."
         )
 
-    def chat(self, message: str) -> str:
+    async def chat(self, message: str) -> str:
         """Interacts with the LLM to provide data analysis insights.
 
         Parameters
@@ -139,4 +130,5 @@ class ChatDA:
         str
             The response from the LLM.
         """
-        return self._single_agent.chat(message)
+        response = await self._single_agent.chat(message)
+        return response
