@@ -42,6 +42,7 @@ agents = [
     "llama-index-llms-groq==0.4.0",
     "llama-index-llms-ollama==0.5.3",
     "llama-index-llms-openai==0.5.4",
+    "llama-index-multi-modal-llms-openai==0.6.0",
     "Flask==3.1.2",
     "Flask-Cors==6.0.1",
     "python-dotenv==1.1.1",

@@ -6,6 +6,9 @@ from .io.storage_manager import StorageManager
 from .io.canvas import CanvasQueue
 from .tools.tooling_context import ToolingContext
 from ._debug.logger import print_debug
+import matplotlib
+
+matplotlib.use("Agg")
 
 
 __all__ = [
