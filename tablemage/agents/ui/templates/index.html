@@ -222,6 +222,19 @@
       font-size: 14px;
     }
 
+    #analysis-history pre,
+    #analysis-history code {
+      white-space: pre-wrap;
+      word-break: break-word;
+      overflow-wrap: anywhere;
+      background: #f4f4f4;
+      padding: 8px;
+      border-radius: 8px;
+      margin: 0;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 13px;
+    }
+
     .table-container {
       overflow-x: auto;
       margin-top: 10px;
@@ -268,6 +281,7 @@
       />
 
       <button class="upload-btn">Upload</button>
+      <button id="download-btn" class="upload-btn">Download Transcript</button>
       <p id="upload-status"></p>
     </div>
 
@@ -304,6 +318,11 @@
     const uploadStatus = document.getElementById('upload-status');
     const uploadBtn = document.querySelector('.upload-btn');
     uploadBtn.addEventListener('click', uploadDataset);
+
+    const downloadBtn = document.getElementById("download-btn");
+    downloadBtn.addEventListener("click", () => {
+      window.location.href = "/download_transcript";
+    });
 
     chatForm.addEventListener('submit', async (e) => {
       e.preventDefault();

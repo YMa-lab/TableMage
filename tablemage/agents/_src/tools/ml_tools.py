@@ -171,6 +171,7 @@ def _ml_regression_function(
 
     context.add_table(table=report.metrics("both"), add_to_vectorstore=False)
     output_str = context.add_dict(report._to_dict())
+    context.add_tool_output(output_str)
     return output_str
 
 
@@ -246,6 +247,7 @@ def _ml_classification_function(
 
     context.add_table(table=report.metrics("both"), add_to_vectorstore=False)
     output_str = context.add_dict(report._to_dict())
+    context.add_tool_output(output_str)
     return output_str
 
 
@@ -364,6 +366,7 @@ def _feature_selection_function(
     context.add_dict(output_dict)
     output_str = f"Selected features: {', '.join(report.top_features())}. "
     output_str += f"Consider using only these features to predict {target}."
+    context.add_tool_output(output_str)
     return output_str
 
 
@@ -479,6 +482,8 @@ def _clustering_function(
             vistype=vis_type, features=", ".join(features_list)
         ),
     )
+
+    context.add_tool_output(output_str)
 
     return output_str
 

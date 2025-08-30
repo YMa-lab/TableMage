@@ -38,6 +38,7 @@ class ToolingContext:
         data_container: DataContainer,
         storage_manager: StorageManager,
         canvas_queue: CanvasQueue,
+        aggregate_only_mode: bool = False,
     ):
         """Initializes the ToolingContext object.
 
@@ -51,11 +52,39 @@ class ToolingContext:
 
         canvas_queue : CanvasQueue
             The CanvasQueue object to use for storing images, tables, etc. for UI use.
+
+        aggregate_only_mode: bool
+            If True, an additional privacy filter is applied to tools to ensure
+            only aggregate-level data is returned (e.g., filters out
+            min/max values, data for categories with few samples)
         """
         self._data_container = data_container
         self._storage_manager = storage_manager
         self._canvas_queue = canvas_queue
         self._toolcalls = []
+        self._transcript = []
+        self._aggregate_only_mode = aggregate_only_mode
+
+    def add_user_input(self, message: str):
+        self._transcript.append(("user_input", message))
+
+    def add_agent_response(self, message: str):
+        self._transcript.append(("agent_response", message))
+
+    def add_tool_output(self, tool_output: str):
+        self._transcript.append(("tool_output", tool_output))
+
+    def get_transcript_as_str(self) -> str:
+        return "\n".join(f"{role}: {msg}" for role, msg in self._transcript)
+
+    def get_prev_n_user_agent_interactions_as_str(self, n: int) -> str:
+        """Filter for user_input and agent_response roles; return last (most recent) n pairs"""
+        filtered = [
+            f"{role}: {msg}"
+            for role, msg in self._transcript
+            if role in ["user_input", "agent_response"]
+        ]
+        return "\n".join(filtered[-n:])
 
     def add_figure(
         self,
@@ -170,6 +199,7 @@ class ToolingContext:
         str
             The input thought, verbatim.
         """
+        self._transcript.append(("agent_thought", thought))
         return self._canvas_queue.push_thought(thought)
 
     def add_code(self, code: str) -> str:
@@ -185,6 +215,7 @@ class ToolingContext:
         str
             The input code, verbatim.
         """
+        self._transcript.append(("agent_code", code))
         return self._canvas_queue.push_code(code)
 
     def add_toolcall(self, toolcall: ToolCall) -> None:
@@ -195,6 +226,7 @@ class ToolingContext:
         toolcall : ToolCall
             The tool call to add.
         """
+        self._transcript.append(("agent_toolcall", toolcall))
         self._toolcalls.append(toolcall)
 
     def is_repeat_toolcall(self, toolcall: ToolCall) -> bool:

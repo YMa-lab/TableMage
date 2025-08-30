@@ -1,6 +1,4 @@
 import pandas as pd
-from typing import Literal
-import asyncio
 from .._src import (
     build_tablemage_analyzer,
     StorageManager,
@@ -29,10 +27,11 @@ class ChatDA:
         memory_size: int = 3000,
         tool_rag: bool = True,
         tool_rag_top_k: int = 5,
+        tool_rag_prompt_augment: bool = True,
         python_only: bool = False,
         tools_only: bool = False,
         multimodal: bool = False,
-        verbose: bool = True,
+        verbose: bool = False,
     ):
         """Initializes the ChatDA object.
 
@@ -62,6 +61,10 @@ class ChatDA:
         tool_rag_top_k : int
             The top-k value to use for the RAG-based tooling. Default is 5.
 
+        tool_rag_prompt_augment : bool
+            If True, the RAG tooling prompts are augmented with history.
+            Default is True.
+
         python_only : bool
             If True, only the Python environment is provided. \
             Default is False.
@@ -76,7 +79,7 @@ class ChatDA:
             Default is False.
 
         verbose : bool
-            If True, prints agent thoughts and tool outputs. Default is True.
+            If True, prints LlamaIndex agent thoughts and tool outputs. Default is False.
         """
         self._data_container = DataContainer()
         self._data_container.set_analyzer(
@@ -108,6 +111,7 @@ class ChatDA:
             memory_size=memory_size,
             tool_rag_top_k=tool_rag_top_k,
             tool_rag=tool_rag,
+            tool_rag_prompt_augment=tool_rag_prompt_augment,
             system_prompt=system_prompt,
             python_only=python_only,
             tools_only=tools_only,
@@ -132,3 +136,13 @@ class ChatDA:
         """
         response = await self._single_agent.chat(message)
         return response
+
+    def get_transcript(self) -> str:
+        """Gets the transcript of the conversation.
+
+        Returns
+        -------
+        str
+            The transcript of the conversation.
+        """
+        return self._single_agent._context.get_transcript_as_str()

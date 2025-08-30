@@ -39,7 +39,9 @@ def _t_test_function(
         .ttest(numeric_var=numeric_var, stratify_by=binary_var, strategy=test)
         ._to_dict()
     )
-    return context.add_dict(dict_output)
+    output = context.add_dict(dict_output)
+    context.add_tool_output(output)
+    return output
 
 
 def build_test_ttest_tool(context: ToolingContext) -> FunctionTool:
@@ -90,7 +92,9 @@ def _anova_test_function(
         .anova(numeric_var=numeric_var, stratify_by=categorical_var, strategy=test)
         ._to_dict()
     )
-    return context.add_dict(dict_output)
+    output = context.add_dict(dict_output)
+    context.add_tool_output(output)
+    return output
 
 
 def build_test_anova_tool(context: ToolingContext) -> FunctionTool:
@@ -133,7 +137,9 @@ def _test_normality_function(
         .test_normality(numeric_var=numeric_var, method=test)
         ._to_dict()
     )
-    return context.add_dict(dict_output)
+    output = context.add_dict(dict_output)
+    context.add_tool_output(output)
+    return output
 
 
 def build_test_normality_tool(context: ToolingContext) -> FunctionTool:
@@ -171,7 +177,9 @@ def _chi2_test_function(x: str, y: str, context: ToolingContext = None) -> str:
         .chi2(categorical_var_1=x, categorical_var_2=y)
         ._to_dict()
     )
-    return context.add_dict(dict_output)
+    output = context.add_dict(dict_output)
+    context.add_tool_output(output)
+    return output
 
 
 def build_test_chi2_tool(context: ToolingContext) -> FunctionTool:
@@ -204,9 +212,11 @@ def _plot_function(x: str, y: str = "", context: ToolingContext = None) -> str:
         )
         context.add_code("analyzer.eda().plot('{x}')".format(x=x))
         fig = context._data_container.analyzer.eda("all").plot(x)
-        return context.add_figure(
+        output = context.add_figure(
             fig, text_description=f"Distribution plot of variable: {x}."
         )
+        context.add_tool_output(output)
+        return output
     else:
         context.add_thought(
             "I am going to plot the relationship between {x} and {y}.".format(x=x, y=y)
@@ -225,7 +235,9 @@ def _plot_function(x: str, y: str = "", context: ToolingContext = None) -> str:
             else:
                 text_description = f"Scatter plot of variables: {x} and {y}."
 
-        return context.add_figure(fig, text_description=text_description)
+        output = context.add_figure(fig, text_description=text_description)
+        context.add_tool_output(output)
+        return output
 
 
 def build_plot_tool(context: ToolingContext) -> FunctionTool:
@@ -246,8 +258,6 @@ Returns a JSON string describing the figure.\
 
 
 # Pairplot tool
-
-
 class _PlotPairsInput(BaseModel):
     vars: str = Field(
         description="Comma delimited list of variables to include in the pairplot."
@@ -261,15 +271,15 @@ def _plot_pairs_function(
 ) -> str:
     vars_list = [var.strip() for var in vars.split(",")]
     context.add_thought(
-        "I am going to generate a pairplot for the following variables: {vars_list}.".format(
-            vars_list=vars_list
-        )
+        f"I am going to generate a pairplot for the following variables: {vars}."
     )
-    context.add_code("analyzer.eda().plot_pairs(['{}'])".format("', '".join(vars_list)))
+    context.add_code(f"analyzer.eda().plot_pairs({vars_list})")
     fig = context._data_container.analyzer.eda("all").plot_pairs(vars_list)
-    return context.add_figure(
+    output = context.add_figure(
         fig, text_description=f"Pairplot of variables: {', '.join(vars_list)}."
     )
+    context.add_tool_output(output)
+    return output
 
 
 def build_plot_pairs_tool(context: ToolingContext) -> FunctionTool:
@@ -312,16 +322,16 @@ def _correlation_comparison_function(
         numeric_vars=vars_list,
     )
     context.add_thought(
-        "I am going to compare the correlation of {target} with the following variables: {vars_list}.".format(
-            target=target, vars_list=", ".join(vars_list)
-        )
+        f"I am going to compare the correlation of {target} with the "
+        f"following variables: {', '.join(vars_list)}."
     )
     context.add_code(
-        "analyzer.eda().tabulate_correlation_comparison(target='{}', numeric_vars=['{}'])".format(
-            target, "', '".join(vars_list)
-        )
+        f"analyzer.eda().tabulate_correlation_comparison(target={target}, "
+        f"numeric_vars={vars_list})"
     )
-    return context.add_table(df_output, add_to_vectorstore=True)
+    output = context.add_table(df_output, add_to_vectorstore=True)
+    context.add_tool_output(output)
+    return output
 
 
 def build_correlation_comparison_tool(context: ToolingContext) -> FunctionTool:
@@ -355,16 +365,15 @@ def _correlation_matrix_function(
         numeric_vars=numeric_vars_list
     )
     context.add_thought(
-        "I am going to compute the correlation matrix for the following variables: {vars_list}.".format(
-            vars_list=", ".join(numeric_vars_list)
-        )
+        f"I am going to compute the correlation matrix for the following "
+        f"variables: {', '.join(numeric_vars_list)}."
     )
     context.add_code(
-        "analyzer.eda().tabulate_correlation_matrix(numeric_vars=['{}'])".format(
-            "', '".join(numeric_vars_list)
-        )
+        f"analyzer.eda().tabulate_correlation_matrix(numeric_vars={numeric_vars_list})"
     )
-    return context.add_table(df_output, add_to_vectorstore=True)
+    output = context.add_table(df_output, add_to_vectorstore=True)
+    context.add_tool_output(output)
+    return output
 
 
 def build_correlation_matrix_tool(context: ToolingContext) -> FunctionTool:
@@ -390,15 +399,13 @@ def _value_counts_function(
     var: str,
     context: ToolingContext = None,
 ):
-    print_debug(
-        "I am going to generate value counts for the variable: {var}.".format(var=var)
-    )
-    context.add_thought(
-        "I am going to generate value counts for the variable: {var}.".format(var=var)
-    )
-    context.add_code("analyzer.eda().value_counts('{var}')".format(var=var))
+    print_debug(f"I am going to generate value counts for the variable: {var}.")
+    context.add_thought(f"I am going to generate value counts for the variable: {var}.")
+    context.add_code(f"analyzer.eda().value_counts('{var}')")
     df_output = context._data_container.analyzer.eda("all").value_counts(var)
-    return context.add_table(df_output, add_to_vectorstore=True)
+    output = context.add_table(df_output, add_to_vectorstore=True)
+    context.add_tool_output(output)
+    return output
 
 
 def build_value_counts_tool(context: ToolingContext) -> FunctionTool:
@@ -425,7 +432,9 @@ def _numeric_summary_statistics_function(context: ToolingContext) -> str:
         "I am going to generate summary statistics for the numeric variables in the dataset."
     )
     context.add_code("analyzer.eda().numeric_stats()")
-    return context.add_table(df_output, add_to_vectorstore=True)
+    output = context.add_table(df_output, add_to_vectorstore=True)
+    context.add_tool_output(output)
+    return output
 
 
 def build_numeric_summary_statistics_tool(context: ToolingContext) -> FunctionTool:
@@ -445,6 +454,7 @@ mean, median, standard deviation, variance, minimum, maximum, and missingness.\
 
 
 # Categorical summary statistics tool
+@tooling_decorator
 def _categorical_summary_statistics_function(context: ToolingContext) -> str:
     """Generates categorical summary statistics for the dataset."""
     df_output = context._data_container.analyzer.eda("all").categorical_stats()
@@ -452,10 +462,11 @@ def _categorical_summary_statistics_function(context: ToolingContext) -> str:
         "I am going to generate summary statistics for the categorical variables in the dataset."
     )
     context.add_code("analyzer.eda().categorical_stats()")
-    return context.add_table(df_output, add_to_vectorstore=True)
+    output = context.add_table(df_output, add_to_vectorstore=True)
+    context.add_tool_output(output)
+    return output
 
 
-@tooling_decorator
 def build_categorical_summary_statistics_tool(context: ToolingContext) -> FunctionTool:
     def temp_fn():
         return _categorical_summary_statistics_function(context)
@@ -469,4 +480,41 @@ Returns a JSON string containing the summary statistics, \
 including most frequent category, least frequent category, and missingness.\
 """,
         fn_schema=_BlankInput(),
+    )
+
+
+# Describe tool
+class _DescribeVariableInput(BaseModel):
+    var: str = Field(
+        description="""\
+The variable to describe (i.e., pandas.Series.describe() output). \
+Output for numeric variables: count, mean, std, min, 25%, 50%, 75%, max.
+Output for categorical variables: count, unique, top, freq.
+"""
+    )
+
+
+@tooling_decorator
+def _describe_variable_function(var: str, context: ToolingContext) -> str:
+    df_output = context._data_container.analyzer.df_all()[var].describe().to_frame()
+    context.add_thought(
+        f"I am going to generate descriptive statistics for the variable: {var}."
+    )
+    context.add_code(f"analyzer.eda().describe_variable('{var}')")
+    output = context.add_table(df_output, add_to_vectorstore=True)
+    context.add_tool_output(output)
+    return output
+
+
+def build_describe_variable_tool(context: ToolingContext) -> FunctionTool:
+    return FunctionTool.from_defaults(
+        fn=partial(_describe_variable_function, context=context),
+        name="describe_variable_function",
+        description="""\
+Generates descriptive statistics for a specific variable in the dataset. \
+Returns a JSON string containing the descriptive statistics, including \
+count, mean, std, min, 25%, 50%, 75%, max for numeric variables; \
+count, unique, top, freq for categorical variables.
+""",
+        fn_schema=_DescribeVariableInput,
     )

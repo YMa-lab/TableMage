@@ -1,10 +1,10 @@
 from flask import Flask, render_template, request, jsonify, send_file
 import pandas as pd
-from typing import Literal
 from pathlib import Path
 import sys
 import matplotlib
 import asyncio
+from io import BytesIO
 
 ui_path = Path(__file__).parent.resolve()
 path_to_add = str(ui_path.parent.parent.parent)
@@ -175,6 +175,28 @@ def serve_file(filename):
                 return send_file(file_path)
 
     return jsonify({"error": f"File '{filename}' not found."}), 404
+
+
+@flask_app.route("/download_transcript", methods=["GET"])
+def download_transcript():
+    if agent is None:
+        return (
+            jsonify({"error": "No dataset uploaded. Please upload a dataset first."}),
+            400,
+        )
+    try:
+        transcript = agent.get_transcript()  # returns str
+        buf = BytesIO(transcript.encode("utf-8"))
+        buf.seek(0)
+        return send_file(
+            buf,
+            as_attachment=True,
+            download_name="transcript.txt",
+            mimetype="text/plain; charset=utf-8",
+        )
+    except Exception as e:
+        flask_app.logger.error(f"Error downloading transcript: {str(e)}")
+        return jsonify({"error": "Failed to generate transcript"}), 500
 
 
 class ChatDA_UserInterface:

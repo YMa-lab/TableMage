@@ -93,7 +93,8 @@ class Analyzer:
             Default: 'Unnamed Dataset'. Name of the dataset the Analyzer is
             initialized for.
         """
-
+        self._split_seed = split_seed
+        self._test_size = test_size
         self._verbose = verbose
 
         df = df.copy()

@@ -7,10 +7,8 @@ from llama_index.core.schema import QueryBundle
 from llama_index.core.memory import Memory
 import asyncio
 from llama_index.core import Settings
-
-from typing import Literal
 from pathlib import Path
-import time
+
 
 from ...._src.display.print_utils import suppress_logging
 from .._debug.logger import print_debug
@@ -33,6 +31,7 @@ from ..tools.eda_tools import (
     build_correlation_comparison_tool,
     build_correlation_matrix_tool,
     build_value_counts_tool,
+    build_describe_variable_tool,
 )
 from ..tools.linear_regression_tools import build_ols_tool, build_logit_tool
 from ..tools.data_tools import build_dataset_summary_tool
@@ -64,7 +63,7 @@ def build_agent(
     tool_rag_top_k: int = 5,
     python_only: bool = False,
     tools_only: bool = False,
-    verbose: bool = True,
+    verbose: bool = False,
 ) -> FunctionAgent:
     """Builds an agent.
 
@@ -108,7 +107,7 @@ def build_agent(
         Default is False.
 
     verbose : bool
-        If True, prints debug messages. Default is True.
+        If True, prints debug messages. Default is False.
 
     Returns
     -------
@@ -140,6 +139,7 @@ def build_agent(
             build_correlation_comparison_tool(context),
             build_correlation_matrix_tool(context),
             build_value_counts_tool(context),
+            build_describe_variable_tool(context),
             build_ols_tool(context),
             build_logit_tool(context),
             build_drop_highly_missing_vars_tool(context),
@@ -172,24 +172,13 @@ def build_agent(
             embed_model=Settings.embed_model,
         )
         tool_retriever = obj_index.as_retriever(similarity_top_k=tool_rag_top_k)
-
-        def retrieve_modded(self, str_or_query_bundle: str) -> list:
-            query_bundle = QueryBundle(query_str=str_or_query_bundle)
-            nodes = self._retriever.retrieve(query_bundle)
-            for node_postprocessor in self._node_postprocessors:
-                nodes = node_postprocessor.postprocess_nodes(
-                    nodes, query_bundle=query_bundle
-                )
-            return [
-                self._object_node_mapping.from_node(node.node) for node in nodes
-            ] + tools_to_persist
-
-        tool_retriever.retrieve = retrieve_modded.__get__(tool_retriever)
         agent = FunctionAgent(
             llm=llm,
+            tools=tools_to_persist,
             tool_retriever=tool_retriever,
             verbose=verbose,
             system_prompt=system_prompt,
+            num_concurrent_runs=1,
         )
     else:
         agent = FunctionAgent(
@@ -197,6 +186,7 @@ def build_agent(
             tools=tools + tools_to_persist,
             verbose=verbose,
             system_prompt=system_prompt,
+            num_concurrent_runs=1,
         )
     return agent
 
@@ -209,10 +199,11 @@ class SingleAgent:
         memory_size: int = 10000,
         tool_rag: bool = True,
         tool_rag_top_k: int = 5,
+        tool_rag_prompt_augment: bool = True,
         system_prompt: str = DEFAULT_SYSTEM_PROMPT,
         python_only: bool = False,
         tools_only: bool = False,
-        verbose: bool = True,
+        verbose: bool = False,
     ):
         """Initializes the SingleAgent object."""
         if not isinstance(llm, FunctionCallingLLM):
@@ -244,10 +235,12 @@ class SingleAgent:
             verbose=verbose,
         )
 
+        self._tool_rag = tool_rag
+        self._tool_rag_prompt_augment = tool_rag_prompt_augment
+
         self._build_agent_kwargs = {
             "llm": llm,
             "context": context,
-            "memory_size": memory_size,
             "tool_rag": tool_rag,
             "tool_rag_top_k": tool_rag_top_k,
             "system_prompt": system_prompt,
@@ -270,17 +263,16 @@ class SingleAgent:
         str
             The response from the LLM.
         """
+        self._context.add_user_input(message)
+
         # tool RAG depends on the message content to retrieve relevant tools.
         # if tool RAG is enabled, we need to append the previous interaction to the current message.
-        if self._build_agent_kwargs.get("tool_rag", False) and self.memory_obj:
-            # get the most recent three messages from memory
-            prev_messages = self.memory_obj.get_all()[-3:]
-            if prev_messages:
-                message = (
-                    f"Most Recent User Query (respond to this): {message}\n\n"
-                    f"Previous Interactions:\n"
-                    + "\n".join([f"- {msg.content}" for msg in prev_messages])
-                )
+        if self._tool_rag and self._tool_rag_prompt_augment:
+            # get last 3 user-message pairs
+            prev_messages = self._context.get_prev_n_user_agent_interactions_as_str(3)
+            message = (
+                f"User Query: {message}\n\n" f"Previous Interactions:\n{prev_messages}"
+            )
 
         def check_valid_output(output: str) -> bool:
             if (
@@ -346,4 +338,5 @@ class SingleAgent:
                 await asyncio.sleep(2.0)
 
         output = await recursive_validated_chat(message)
+        self._context.add_agent_response(output)
         return output

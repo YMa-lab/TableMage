@@ -46,6 +46,7 @@ def _ols_function(target: str, predictors: str, context: ToolingContext) -> str:
         ols_report.plot_diagnostics("train"), text_description="Diagnostic plots."
     )
     print_debug(f"_ols_function output: {output_str}")
+    context.add_tool_output(output_str)
     return output_str
 
 
@@ -53,9 +54,9 @@ def build_ols_tool(context: ToolingContext) -> FunctionTool:
     return FunctionTool.from_defaults(
         fn=partial(_ols_function, context=context),
         name="ols_function",
-        description="""Performs ordinary least squares regression.
-        Returns a JSON string containing coefficients and metrics.
-        Also, plots diagnostic plots.""",
+        description="""Performs ordinary least squares regression. \
+Returns a JSON string containing coefficients and metrics. \
+Also, plots diagnostic plots.""",
         fn_schema=_OLSToolInput,
     )
 
@@ -96,6 +97,7 @@ def _logit_function(target: str, predictors: str, context: ToolingContext) -> st
         logit_report.plot_diagnostics("train"), text_description="Diagnostic plots."
     )
     print_debug(f"_logit_function output: {output_str}")
+    context.add_tool_output(output_str)
     return output_str
 
 
@@ -103,8 +105,8 @@ def build_logit_tool(context: ToolingContext) -> FunctionTool:
     return FunctionTool.from_defaults(
         fn=partial(_logit_function, context=context),
         name="logit_function",
-        description="""Performs logistic regression.
-        Returns a JSON string containing coefficients and metrics.
-        Also, plots diagnostic plots.""",
+        description="""Performs logistic regression. \
+Returns a JSON string containing coefficients and metrics. \
+Also, plots diagnostic plots.""",
         fn_schema=_LogitToolInput,
     )

@@ -1050,7 +1050,9 @@ class EDAReport:
             labelsize=plot_options._axis_minor_ticklabel_font_size,
         )
 
-        plt.close(fig)
+        if fig is not None:
+            fig.tight_layout()
+            plt.close(fig)
         return fig
 
     @ensure_arg_list_uniqueness()

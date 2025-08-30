@@ -51,7 +51,7 @@ def _estimate_causal_effect_function(
         )
         context.add_code(
             f"analyzer.causal(treatment='{treatment}', outcome='{outcome}', "
-            f"confounders='{confounders_as_list}').estimate_att(method='{method}')"
+            f"confounders={confounders_as_list}).estimate_att(method='{method}')"
         )
         report = context.data_container.analyzer.causal(
             treatment=treatment, outcome=outcome, confounders=confounders_as_list
@@ -64,7 +64,7 @@ def _estimate_causal_effect_function(
         )
         context.add_code(
             f"analyzer.causal(treatment='{treatment}', outcome='{outcome}', "
-            f"confounders='{confounders_as_list}').estimate_ate(method='{method}')"
+            f"confounders={confounders_as_list}).estimate_ate(method='{method}')"
         )
         report = context.data_container.analyzer.causal(
             treatment=treatment, outcome=outcome, confounders=confounders_as_list

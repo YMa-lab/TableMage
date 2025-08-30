@@ -3,8 +3,9 @@ from llama_index.core.indices import VectorStoreIndex
 from llama_index.core.schema import TextNode
 import logging
 from pathlib import Path
+from sdv.single_table import GaussianCopulaSynthesizer
+from sdv.metadata import Metadata
 
-from ..options import options
 from .._debug.logger import debug_log_path
 from .... import Analyzer
 from ....options import print_options
@@ -145,6 +146,8 @@ class VariableInfo:
 class DataContainer:
     def __init__(self):
         self.analyzer = None
+        self.synthetic_dataset_for_tools = False
+        self.orig_analyzer = None
 
     def set_analyzer(self, analyzer: Analyzer):
         """Sets the Analyzer for the DataContainer."""

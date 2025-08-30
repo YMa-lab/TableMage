@@ -186,7 +186,8 @@ class StorageManager:
             )
 
         text_description = (
-            f"Path to image: {img_path}\n\n" + f"Description: {text_description}"
+            f"Image has been displayed for the user in the right panel.\n"
+            f"Description of image: {text_description}"
         )
 
         if self._use_vectorstore:

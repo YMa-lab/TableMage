@@ -291,12 +291,14 @@ def _python_env_code_run_function(
     if not result["stdout"] and not result["stderr"] and result["result"] is None:
         return "Empty output; please ensure you print or save the result to the `result` variable."
 
-    return (
+    output = (
         f"Output:\n{result['stdout']}\n"
         + f"Error:\n{result['stderr']}\n"
         + f"Result:\n{result['result']}\n"
         + f"Result text:\n{str_to_append}"
     )
+    context.add_tool_output(output)
+    return output
 
 
 python_env_code_run_descr = """\
@@ -313,7 +315,8 @@ DESCRIPTION:
 - Save the output data structure to the variable `result`.
 
 IMPORTANT:
-- ONLY use this tool as a LAST RESORT. Most tasks can be accomplished using other tools.
+- Most tasks can be accomplished using other tools. \
+    Prioritize using other tools over this tool.
 - Transformations to DataFrames (scaling, imputation, feature engineering) are not saved. \
     DO NOT USE THIS TOOL FOR DATA TRANSFORMATIONS.
 
