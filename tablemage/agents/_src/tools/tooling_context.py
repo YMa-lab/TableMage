@@ -75,12 +75,12 @@ class ToolingContext:
         self._transcript.append(("tool_output", tool_output))
 
     def get_transcript_as_str(self) -> str:
-        return "\n".join(f"{role}: {msg}" for role, msg in self._transcript)
+        return "\n".join(f"----- {role} -----\n{msg}" for role, msg in self._transcript)
 
     def get_prev_n_user_agent_interactions_as_str(self, n: int) -> str:
         """Filter for user_input and agent_response roles; return last (most recent) n pairs"""
         filtered = [
-            f"{role}: {msg}"
+            f"----- {role} -----\n{msg}"
             for role, msg in self._transcript
             if role in ["user_input", "agent_response"]
         ]
