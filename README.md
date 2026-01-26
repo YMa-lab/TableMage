@@ -155,7 +155,25 @@ print(agent.chat("Compute the summary statistics for the numeric variables."))
 
 ## Updates
 
+- December 2025: We have released a preprint of our work on medRxiv!
 - February 2025: We have released an alpha version of TableMage on PyPI!
 
+## Citation
+
+If this software was beneficial in your work, please consider citing it as follows:
+
+```bibtex
+@article{Yang2025-TableMage,
+    author = {Yang, Andrew and Woo, Joshua and Zhang, Ryan and Mach, Alan and Ramkumar, Prem and Ma, Ying},
+    title = {Tool-wielding language-model-based agent offers conversational exploration of clinical tabular data},
+    elocation-id = {2025.12.01.25341392},
+    year = {2025},
+    doi = {10.64898/2025.12.01.25341392},
+    publisher = {Cold Spring Harbor Laboratory Press},
+    URL = {https://www.medrxiv.org/content/early/2025/12/02/2025.12.01.25341392},
+    eprint = {https://www.medrxiv.org/content/early/2025/12/02/2025.12.01.25341392.full.pdf},
+    journal = {medRxiv}
+}
+```
 
 
