@@ -30,12 +30,10 @@ def build_write_text_tool(context: ToolingContext) -> FunctionTool:
 
 # retrieve text tool
 class _RetrieveTextOutput(BaseModel):
-    query: str = Field(
-        description="""Query used to retrieve information in STORAGE.
+    query: str = Field(description="""Query used to retrieve information in STORAGE.
         For example, if STORAGE contains summary statistics, an appropriate query could be:
         What is the mean of the variable 'mpg'?
-        """
-    )
+        """)
 
 
 def _retrieve_text_function(query: str, context: ToolingContext) -> str:

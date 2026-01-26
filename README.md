@@ -1,10 +1,9 @@
 # TableMage &nbsp; 🧙‍♂️📊
 
-[![DOI](https://zenodo.org/badge/751991067.svg)](https://doi.org/10.5281/zenodo.14914515)
-![Python Versions](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue)
+![Python Version](https://img.shields.io/badge/python-3.12-blue)
 [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-![Tests Passing](https://github.com/ajy25/TableMage/actions/workflows/test.yml/badge.svg)
+![Tests Passing](https://github.com/YMa-lab/TableMage/actions/workflows/test.yml/badge.svg)
 [![Documentation Status](https://readthedocs.org/projects/tablemage/badge/?version=latest)](https://tablemage.readthedocs.io/en/latest/?badge=latest)
 
 
@@ -16,14 +15,15 @@ and effortlessly benchmark machine learning models.
 
 ## Installation
 
-We recommend installing TableMage in a new virtual environment.
+We recommend installing TableMage in a new virtual environment. TableMage supports Python version 3.12.
 
 To install TableMage:
 ```
-pip install tablemage
+git clone https://github.com/YMa-lab/TableMage.git
+cd TableMage
+pip install .
+cd ..
 ```
-
-TableMage supports Python versions 3.10 through 3.12.
 
 > [!NOTE]
 > **For MacOS users:** You might run into an error involving [XGBoost](https://xgboost.readthedocs.io/en/stable/#), one of TableMage's dependencies, when using TableMage for the first time.

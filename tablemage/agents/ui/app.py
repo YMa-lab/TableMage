@@ -36,7 +36,7 @@ def chat(msg: str) -> str:
         return "No dataset uploaded. Please upload a dataset first."
 
     else:
-        return asyncio.run(agent.chat(msg))
+        return asyncio.run(agent.achat(msg))
 
 
 def get_analysis():

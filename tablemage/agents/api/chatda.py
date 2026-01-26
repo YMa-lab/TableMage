@@ -1,3 +1,4 @@
+import asyncio
 import pandas as pd
 from .._src import (
     build_tablemage_analyzer,
@@ -121,8 +122,8 @@ class ChatDA:
             f"Agent initialized. Agent type: {self._single_agent.__class__.__name__}."
         )
 
-    async def chat(self, message: str) -> str:
-        """Interacts with the LLM to provide data analysis insights.
+    async def achat(self, message: str) -> str:
+        """Async version of chat. Interacts with the LLM to provide data analysis insights.
 
         Parameters
         ----------
@@ -135,7 +136,35 @@ class ChatDA:
             The response from the LLM.
         """
         response = await self._single_agent.chat(message)
-        return response
+        return str(response)
+
+    def chat(self, message: str) -> str:
+        """Interacts with the LLM to provide data analysis insights.
+
+        Parameters
+        ----------
+        message : str
+            The message to send to the LLM.
+
+        Returns
+        -------
+        str
+            The response from the LLM.
+        """
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = None
+
+        if loop is not None and loop.is_running():
+            # We're in an async context (e.g., Jupyter notebook)
+            import nest_asyncio
+
+            nest_asyncio.apply()
+            return asyncio.get_event_loop().run_until_complete(self.achat(message))
+        else:
+            # No event loop running, use asyncio.run()
+            return asyncio.run(self.achat(message))
 
     def get_transcript(self) -> str:
         """Gets the transcript of the conversation.

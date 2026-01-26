@@ -18,7 +18,6 @@ from ....display.print_utils import (
 from ....display.print_options import print_options
 from ....feature_selection import BaseFSR, VotingSelectionReport
 
-
 warnings.simplefilter("ignore", category=UserWarning)
 
 

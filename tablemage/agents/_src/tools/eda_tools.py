@@ -485,13 +485,11 @@ including most frequent category, least frequent category, and missingness.\
 
 # Describe tool
 class _DescribeVariableInput(BaseModel):
-    var: str = Field(
-        description="""\
+    var: str = Field(description="""\
 The variable to describe (i.e., pandas.Series.describe() output). \
 Output for numeric variables: count, mean, std, min, 25%, 50%, 75%, max.
 Output for categorical variables: count, unique, top, freq.
-"""
-    )
+""")
 
 
 @tooling_decorator

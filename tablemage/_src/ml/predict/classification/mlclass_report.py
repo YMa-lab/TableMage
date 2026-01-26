@@ -21,7 +21,6 @@ from ....display.print_options import print_options
 from ....display.plot_options import plot_options
 from ....feature_selection import BaseFSC, VotingSelectionReport
 
-
 warnings.simplefilter("ignore", category=UserWarning)
 
 

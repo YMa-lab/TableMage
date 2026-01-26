@@ -51,7 +51,6 @@ from ..tools.tooling_context import ToolingContext
 
 from .prompt.single_agent_system_prompt import DEFAULT_SYSTEM_PROMPT
 
-
 io_path = Path(__file__).resolve().parent.parent / "io"
 
 

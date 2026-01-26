@@ -10,7 +10,6 @@ from .boruta_feature_selection import (
 from .base_feature_selection import BaseFSR, BaseFSC, BaseFS
 from .voteselect_report import VotingSelectionReport
 
-
 __all__ = [
     "KBestFSR",
     "LassoFSR",

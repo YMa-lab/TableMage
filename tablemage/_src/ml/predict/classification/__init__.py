@@ -6,7 +6,6 @@ from .svm import SVMC
 from .base import BaseC
 from .mlclass_report import MLClassificationReport
 
-
 __all__ = [
     "LinearC",
     "TreesC",

@@ -33,24 +33,24 @@ def use_agents():
     global __all__
     global agents
     # try to import the agents module
-    try:
-        from . import agents
+    # try:
+    from . import agents
 
-        if "agents" in locals():
-            __all__.append("agents")
+    if "agents" in locals():
+        __all__.append("agents")
 
-        print_wrapped(
-            text="The 'tablemage.agents' module has been imported.",
-            type="UPDATE",
-            level="INFO",
-        )
-    except Exception as e:
-        print_wrapped(
-            text="Could not import the 'tablemage.agents' module. "
-            "Exception: {}".format(e),
-            type="WARNING",
-            level="INFO",
-        )
+    print_wrapped(
+        text="The 'tablemage.agents' module has been imported.",
+        type="UPDATE",
+        level="INFO",
+    )
+    # except Exception as e:
+    #     print_wrapped(
+    #         text="Could not import the 'tablemage.agents' module. "
+    #         "Exception: {}".format(e),
+    #         type="WARNING",
+    #         level="INFO",
+    #     )
 
 
 __all__ = ["Analyzer", "ml", "options", "fs", "use_agents"]

@@ -8,7 +8,6 @@ from .reports import (
     MNLogitReport,
 )
 
-
 __all__ = [
     "OLSLinearModel",
     "LogitLinearModel",

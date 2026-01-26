@@ -3,13 +3,10 @@ from llama_index.core.indices import VectorStoreIndex
 from llama_index.core.schema import TextNode
 import logging
 from pathlib import Path
-from sdv.single_table import GaussianCopulaSynthesizer
-from sdv.metadata import Metadata
 
 from .._debug.logger import debug_log_path
 from .... import Analyzer
 from ....options import print_options
-
 
 io_log_path = Path(__file__).resolve().parent / "_log" / "_log.log"
 if io_log_path.exists():

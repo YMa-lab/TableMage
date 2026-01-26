@@ -16,7 +16,6 @@ from ..llms.utils import describe_image
 from .._debug.logger import print_debug
 from ...._src.utils.serialize import prepare_for_json
 
-
 # set the environment variable to disable parallelism for FastEmbedEmbedding
 # parallelism conflicts with the Python environment
 os.environ["TOKENIZERS_PARALLELISM"] = "false"

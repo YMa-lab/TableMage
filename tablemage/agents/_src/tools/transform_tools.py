@@ -260,8 +260,7 @@ def build_revert_to_original_tool(context: ToolingContext) -> FunctionTool:
 
 class _EngineerNumericFeatureInput(BaseModel):
     feature_name: str = Field(description="The name of the new feature to engineer.")
-    formula: str = Field(
-        description="""\
+    formula: str = Field(description="""\
 Formula for the new feature. For example, "x1 + x2" would create
 a new feature that is the sum of the columns x1 and x2 in the DataFrame.
 All variables used must be numeric.
@@ -278,8 +277,7 @@ Handles the following operations:
 - Square root (sqrt)
 
 If the i-th unit is missing a value in any of the variables used in the
-formula, then the i-th unit of the new feature will be missing."""
-    )
+formula, then the i-th unit of the new feature will be missing.""")
 
 
 @tooling_decorator
@@ -330,8 +328,7 @@ class _EngineerCategoricalFeatureInput(BaseModel):
         description="A comma-delimited string of numeric thresholds for creating the categorical variable levels. "
         "Thresholds must be specified in ascending order."
     )
-    leq: bool = Field(
-        description="""\
+    leq: bool = Field(description="""\
 Specifies how the boundaries of the levels are defined.
 If True, levels are inclusive on the upper end of a threshold.
 
@@ -341,8 +338,7 @@ Low (x <= 0), Medium (0 < x <= 10), High (x > 10).
 
 If leq = False, the levels are:
 Low (x < 0), Medium (0 <= x < 10), High (x >= 10).
-"""
-    )
+""")
 
 
 @tooling_decorator

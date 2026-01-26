@@ -6,7 +6,6 @@ from .custom import CustomR
 from .base import BaseR
 from .mlreg_report import MLRegressionReport
 
-
 __all__ = [
     "LinearR",
     "RobustLinearR",

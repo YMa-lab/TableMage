@@ -5,7 +5,6 @@ import pytest
 import numpy as np
 import statsmodels.api as sm
 
-
 parent_dir = pathlib.Path(__file__).resolve().parent.parent.parent.parent
 sys.path.append(str(parent_dir))
 

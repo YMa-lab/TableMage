@@ -570,6 +570,9 @@ class DataEmitter:
             self._numeric_vars,
             self._categorical_to_categories,
         ) = self._compute_categorical_numeric_vars(self._working_df_train)
+        # Add the new feature to the scalers dictionary
+        if feature_name not in self._numeric_var_to_scalers:
+            self._numeric_var_to_scalers[feature_name] = []
         return None
 
     @ensure_arg_list_uniqueness()
@@ -850,13 +853,11 @@ class DataEmitter:
             vars_to_skip = []
             for var in vars:
                 if var not in X.columns:
-                    print_wrapped(
-                        f"Variable {var} not in DataFrame. "
-                        "This is likely due to the target variable being included "
-                        "in a dropna step. "
-                        f"Skipping dropna step for variable {var}.",
-                        type="WARNING",
-                    )
+                    # print_wrapped(
+                    #     f"Variable {var} not in DataFrame. "
+                    #     f"Skipping dropna step for variable {var}.",
+                    #     type="PROGRESS",
+                    # )
                     vars_to_skip.append(var)
             vars = list(set(vars) - set(vars_to_skip))
             return X.dropna(subset=vars)

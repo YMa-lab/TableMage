@@ -15,7 +15,6 @@ from .._src.stattests import StatisticalTestReport
 
 from .._src.causal import CausalReport
 
-
 __all__ = [
     "LogitReport",
     "OLSReport",

@@ -4,13 +4,11 @@ import pandas as pd
 import pytest
 import numpy as np
 
-
 parent_dir = pathlib.Path(__file__).resolve().parent.parent.parent.parent
 sys.path.append(str(parent_dir))
 
 
 import tablemage as tm
-
 
 SAMPLE_SIZE = 200
 

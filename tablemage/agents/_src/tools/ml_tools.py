@@ -115,8 +115,7 @@ def parse_predictor_list_from_str(predictors_str: str) -> list[str]:
 
 
 class _MLRegressionInput(BaseModel):
-    models: str = Field(
-        description="""\
+    models: str = Field(description="""\
 A comma delimited string of machine learning models to evaluate.
 The available models are (in 'Model Name': Description format)...
 1. 'OLS': Ordinary least squares regression
@@ -127,8 +126,7 @@ The available models are (in 'Model Name': Description format)...
 6. 'XGBoost': XGBoost regressor
 7. 'SVM': Support vector machine regressor with radial basis function kernel
 An example input (without the quotes) is: 'OLS, Lasso, RF'.
-"""
-    )
+""")
     target: str = Field(description="The target variable.")
     predictors: str = Field(
         description="A comma delimited string of features/predictors. "
@@ -188,8 +186,7 @@ def build_ml_regression_tool(context: ToolingContext) -> FunctionTool:
 
 
 class _MLClassificationInput(BaseModel):
-    models: str = Field(
-        description="""\
+    models: str = Field(description="""\
 A comma delimited string of machine learning models to evaluate.
 The available models are (in 'Model Name': Description format)...
 1. 'Logistic': Logistic regression
@@ -200,8 +197,7 @@ The available models are (in 'Model Name': Description format)...
 6. 'XGBoost': XGBoost classifier
 7. 'SVM': Support vector machine classifier with radial basis function kernel
 An example input (without the quotes) is: 'Logistic, RF, XGBoost'.
-"""
-    )
+""")
     target: str = Field(description="The target variable.")
     predictors: str = Field(
         description="A comma delimited string of features/predictors. "
@@ -264,23 +260,19 @@ def build_ml_classification_tool(context: ToolingContext) -> FunctionTool:
 
 
 class _FeatureSelectionInput(BaseModel):
-    feature_selector: str = Field(
-        description="""\
+    feature_selector: str = Field(description="""\
 The feature selection method to use. The available methods are:
 
 1. 'Boruta': Boruta method (automatically selects the number of features)
 2. 'Select<N>Best': Select N best features based on the F-score, where you replace <N> with the number of features you want to select.
 
 Two example inputs (without the quotes) are: 'Boruta' and 'Select5Best'.
-"""
-    )
+""")
     target: str = Field(description="The target variable.")
-    predictors: str = Field(
-        description="""\
+    predictors: str = Field(description="""\
 A comma delimited string of variables used by the models to predict the target.
 An example input (without the quotes) is: 'var1, var2, var3'.
-"""
-    )
+""")
     task: Literal["classification", "regression"] = Field(
         description="The type of task to perform. "
         "Either 'classification' or 'regression'."
@@ -387,22 +379,18 @@ If a category is selected, the output would be '<variable_name>::<category>'.
 
 
 class _ClusteringInput(BaseModel):
-    features: str = Field(
-        description="""\
+    features: str = Field(description="""\
 A comma delimited string of variables/features to use for clustering.
 An example input (without the quotes) is: 'var1, var2, var3'.
-"""
-    )
-    model: str = Field(
-        description="""\
+""")
+    model: str = Field(description="""\
 The available models are (in 'Model Name': Description format):
 
 1. 'KMeans': KMeans clustering
 2. 'GMM': Gaussian mixture model clustering
 
 An example input (without the quotes) is: 'KMeans'.
-"""
-    )
+""")
     n_clusters: int = Field(
         description="The number of clusters to create. An example input (without the quotes) is: '5'. "
         "If left blank (empty str), the optimal number of clusters will be automatically determined."
@@ -411,16 +399,14 @@ An example input (without the quotes) is: 'KMeans'.
         description="The maximum number of clusters to test. An example input (without the quotes) is: '10'. "
         "This is only used if 'n_clusters' is left blank (empty str). Leave blank if 'n_clusters' is specified."
     )
-    vis_type: str = Field(
-        description="""\
+    vis_type: str = Field(description="""\
 The type of visualization to use. The available types are:
 
 1. 'PCA': Principal component analysis
 2. 'TSNE': t-distributed stochastic neighbor embedding
 
 An example input (without the quotes) is: 'PCA'.
-"""
-    )
+""")
 
 
 @tooling_decorator

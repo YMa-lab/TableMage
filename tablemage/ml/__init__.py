@@ -54,7 +54,6 @@ from .._src.ml.cluster import (
     GMMClust,
 )
 
-
 __all__ = [
     "LinearR",
     "RobustLinearR",

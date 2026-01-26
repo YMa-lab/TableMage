@@ -129,12 +129,7 @@ with warnings.catch_warnings(record=True) as w:
     warnings.simplefilter("always")
 """
 
-    script_content = (
-        preamble
-        + "\n"
-        + code
-        + "\n"
-        + """\
+    script_content = preamble + "\n" + code + "\n" + """\
 # If result is a function, call it to get the result
 if callable(result):
     result = result()
@@ -149,7 +144,6 @@ except Exception as e:
         print('Result could not be serialized or converted to string.', file=sys.stdout)
         print('Try again and print the result to see the output.', file=sys.stdout)
 """
-    )
 
     try:
         # Save the DataFrames to temporary files

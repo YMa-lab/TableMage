@@ -2,7 +2,6 @@ import logging
 from pathlib import Path
 import sys
 
-
 debug_path = Path(__file__).resolve().parent
 debug_log_path = debug_path / "_debug_log.log"
 if not debug_log_path.exists():
