@@ -6,12 +6,10 @@
 ![Tests Passing](https://github.com/YMa-lab/TableMage/actions/workflows/test.yml/badge.svg)
 [![Documentation Status](https://readthedocs.org/projects/tablemage/badge/?version=latest)](https://tablemage.readthedocs.io/en/latest/?badge=latest)
 
-
 TableMage is a Python package for low-code/conversational clinical data science.
 TableMage can help you quickly explore tabular datasets, 
 easily perform regression analyses,
 and effortlessly benchmark machine learning models.
-
 
 ## Installation
 
@@ -25,137 +23,18 @@ pip install .
 cd ..
 ```
 
+## Usage
+
+Please read the demo available on [readthedocs](https://tablemage.readthedocs.io/en/latest/getting_started.html#demo).
+
 > [!NOTE]
 > **For MacOS users:** You might run into an error involving [XGBoost](https://xgboost.readthedocs.io/en/stable/#), one of TableMage's dependencies, when using TableMage for the first time.
 > To resolve this error, you'll need to install libomp: `brew install libomp`. This requries [Homebrew](https://brew.sh/).
 
-## Quick start (low-code)
-
-You'll likely use TableMage for machine learning model benchmarking. Here's how to do it.
-
-```python
-import tablemage as tm
-import pandas as pd
-import joblib
-
-# load table (assume 'y' is a numeric variable we wish to predict)
-df = ...
-
-# initialize an Analyzer object
-analyzer = tm.Analyzer(df, test_size=0.2)
-
-# preprocess data, taking care to exclude the target variable 'y' from the operations
-analyzer.dropna(
-    include_vars=['y']
-).impute(
-    exclude_vars=['y']
-).scale(
-    exclude_vars=['y']
-)
-
-# train regressors
-reg_report = analyzer.regress(  # categorical variables are automatically one-hot encoded
-    models=[                    # hyperparameter tuning is preset and automatic
-        tm.ml.LinearR('l2', name='ridge'),
-        tm.ml.TreesR('random_forest', name='rf'),
-        tm.ml.TreesR('xgboost', name='xgb'),
-    ],
-    target='y',                 # automatically drops examples with missing values in target variable
-    predictors=None,            # None signifies all variables except target variable
-    feature_selectors=[
-        tm.fs.BorutaFSR()       # select subset of predictors prior to training
-    ]
-)
-
-# view model metrics
-print(reg_report.metrics('test'))
-
-# predict on new data
-new_df = ...
-ridge_model = reg_report.model('ridge').sklearn_pipeline()
-y_pred = ridge_model.predict(new_df)
-
-# save as sklearn pipeline
-joblib.dump(ridge_model, 'ridge.joblib')
-```
-
-
-## Quick start (conversational)
-
-First, install the required additional dependencies.
-```
-pip install "tablemage[agents]"
-```
-
-Next, add your API key. You only need to do this once; your API key will be written to a local `.env` file.
-```python
-import tablemage as tm
-tm.use_agents()                                             # import the agents module
-tm.agents.set_key("openai", "add-your-api-key-here")        # set API key
-```
-
-You can open up a chat user interface by running the following code 
-and navigating to the URL that appears in the terminal.
-Your conversation with the ChatDA, the AI agent, appears on the left, 
-while ChatDA's analyses (figures made, tables produced, TableMage commands used) 
-appear on the right.
-
-```python
-import tablemage as tm
-tm.use_agents()
-tm.agents.options.set_llm(
-    llm_type="openai", 
-    model_name="gpt-4o", 
-    temperature=0.1
-)
-# optionally, multimodal ChatDA can interpret figures
-tm.agents.options.set_multimodal_llm(
-    llm_type="openai",
-    model_name="gpt-4o",
-    temperature=0.1
-)                           # multimodal LLM must be specified for multimodal ChatDA
-tm.agents.ChatDA_UserInterface(
-    split_seed=42,
-    memory_size=500,        # higher memory_size --> higher cost but better performance
-    tools_only=True,        # if tools_only=True, Python interpreter is disabled
-    tool_rag_top_k=5,       # higher k --> higher cost but better performance
-    multimodal=True         # if multimodal=True, ChatDA can analyze figures
-).run(debug=False)
-```
-
-Or, you can chat with the AI agent directly in Python:
-
-```python
-import pandas as pd
-import tablemage as tm
-tm.use_agents()
-tm.agents.options.set_llm(
-    llm_type="openai", 
-    model_name="gpt-4o", 
-    temperature=0.1
-)
-
-# load table
-df = ...
-
-# initialize a ChatDA object
-agent = tm.agents.ChatDA(
-    df,                     # additional parameters can be set, e.g. memory type, 
-    test_size=0.2           # disabling/enabling Python environment, etc.
-)
-
-# chat with the agent
-print(agent.chat("Compute the summary statistics for the numeric variables."))
-```
-
-> [!NOTE]
-> You must be connected to the internet to use the `agents` module, even if you are using Ollama to run a locally-hosted LLM.
-> TableMage's agent, ChatDA, relies on FastEmbed for retrieval augmented generation, but it may need to download the FastEmbed model from the internet prior to use.
-> ChatDA can be run with a local LLM and FastEmbed, ensuring total data privacy.
-
 ## Updates
 
-- December 2025: We have released a preprint of our work on medRxiv!
+- February 2026: Our paper on ChatDA has been published in *npj Artificial Intelligence*! We will continue developing TableMage and ChatDA.
+- December 2025: We have released a preprint TableMage's ChatDA agent on *medRxiv*!
 - February 2025: We have released an alpha version of TableMage on PyPI!
 
 ## Citation
@@ -163,16 +42,19 @@ print(agent.chat("Compute the summary statistics for the numeric variables."))
 If this software was beneficial in your work, please consider citing it as follows:
 
 ```bibtex
-@article{Yang2025-TableMage,
-    author = {Yang, Andrew and Woo, Joshua and Zhang, Ryan and Mach, Alan and Ramkumar, Prem and Ma, Ying},
-    title = {Tool-wielding language-model-based agent offers conversational exploration of clinical tabular data},
-    elocation-id = {2025.12.01.25341392},
-    year = {2025},
-    doi = {10.64898/2025.12.01.25341392},
-    publisher = {Cold Spring Harbor Laboratory Press},
-    URL = {https://www.medrxiv.org/content/early/2025/12/02/2025.12.01.25341392},
-    eprint = {https://www.medrxiv.org/content/early/2025/12/02/2025.12.01.25341392.full.pdf},
-    journal = {medRxiv}
+@article{Yang2026,
+  author = {Yang, Andrew and Woo, Joshua and Zhang, Ryan and Mach, Alan and Ramkumar, Prem and Ma, Ying},
+  title = {Tool-wielding language model-based agent offers conversational exploration of clinical tabular data},
+  journal = {npj Artificial Intelligence},
+  year = {2026},
+  volume = {2},
+  number = {1},
+  pages = {22},
+  month = {feb},
+  doi = {10.1038/s44387-025-00070-2},
+  url = {https://doi.org/10.1038/s44387-025-00070-2},
+  issn = {3005-1460},
+  abstract = {Advancing evidence-based medicine requires integrating clinical expertise with data analysis. While clinicians contribute essential domain knowledge, applying modern data science methods often requires specialized training, creating a barrier to adoption. To bridge this gap, we developed ChatDA, an artificial intelligence agent enabling large language model-mediated conversational analysis of de-identified clinical tabular datasets. ChatDA empowers clinicians to extract meaningful insights efficiently and accurately, making data-driven clinical research more accessible and effective.}
 }
 ```
 
