@@ -2,6 +2,7 @@ import os
 import shutil
 import pathlib
 
+
 def remove_pycache(directory_path: str):
     """Recursively traverses the provided directory and removes all __pycache__
     subdirectories.

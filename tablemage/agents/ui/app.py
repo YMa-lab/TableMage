@@ -4,6 +4,8 @@ from pathlib import Path
 import sys
 import matplotlib
 import asyncio
+import threading
+import uuid
 from io import BytesIO
 
 ui_path = Path(__file__).parent.resolve()
@@ -25,6 +27,8 @@ agent: ChatDA = None
 
 
 chatda_kwargs = {}
+
+chat_tasks: dict = {}
 
 
 def chat(msg: str) -> str:
@@ -65,8 +69,7 @@ def upload_dataset():
     if file.filename == "":
         return jsonify({"error": "No selected file"}), 400
 
-    # Get the test size from the form data
-    test_size = request.form.get("test_size", 0.2)  # Default to 0.2 if not provided
+    test_size = request.form.get("test_size", 0.2)
     try:
         test_size = float(test_size)
         if not (0.0 <= test_size <= 1.0):
@@ -75,10 +78,8 @@ def upload_dataset():
         return jsonify({"error": str(e)}), 400
 
     try:
-        # Read the uploaded CSV file
         uploaded_data = pd.read_csv(file)
 
-        # if the first column is unnamed, drop it
         if uploaded_data.columns[0] == "Unnamed: 0":
             uploaded_data = uploaded_data.drop(columns="Unnamed: 0")
 
@@ -94,8 +95,38 @@ def chat_route():
     user_message = request.json.get("message")
     if not user_message:
         return jsonify({"error": "No message provided"}), 400
-    response_message = chat(user_message)
-    return jsonify({"response": response_message})
+
+    task_id = str(uuid.uuid4())
+    chat_tasks[task_id] = {"status": "running", "response": None}
+
+    def run_chat():
+        try:
+            response_message = chat(user_message)
+            chat_tasks[task_id]["response"] = response_message
+            chat_tasks[task_id]["status"] = "done"
+        except Exception as e:
+            chat_tasks[task_id]["response"] = f"Error: {e}"
+            chat_tasks[task_id]["status"] = "error"
+
+    thread = threading.Thread(target=run_chat, daemon=True)
+    thread.start()
+
+    return jsonify({"task_id": task_id})
+
+
+@flask_app.route("/chat/status/<task_id>", methods=["GET"])
+def chat_status(task_id):
+    task = chat_tasks.get(task_id)
+    if task is None:
+        return jsonify({"error": "Task not found"}), 404
+
+    if task["status"] == "running":
+        return jsonify({"status": "running"})
+    else:
+        response = task["response"]
+        # Clean up completed task
+        del chat_tasks[task_id]
+        return jsonify({"status": task["status"], "response": response})
 
 
 @flask_app.route("/analysis", methods=["GET"])
@@ -123,7 +154,6 @@ def get_analysis_history():
                     }
                 )
             elif isinstance(item, CanvasTable):
-                # Load the DataFrame and convert to HTML
                 path_obj = Path(item.path)
                 df = pd.read_pickle(path_obj)
                 html_table = df.to_html(classes="table", index=True)
@@ -156,6 +186,60 @@ def get_analysis_history():
         return jsonify({"error": "Failed to retrieve analysis history"}), 500
 
 
+@flask_app.route("/analysis/since/<int:index>", methods=["GET"])
+def get_analysis_since(index):
+    """
+    Retrieve analysis items added since the given index.
+    Used for real-time polling during agent processing.
+    """
+    if agent is None:
+        return jsonify([])
+
+    try:
+        analysis_items = get_analysis()
+        new_items = analysis_items[index:]
+        items = []
+        for item in new_items:
+            if isinstance(item, CanvasFigure):
+                path_obj = Path(item.path)
+                items.append(
+                    {
+                        "file_name": path_obj.name,
+                        "file_type": "figure",
+                        "file_path": str(path_obj),
+                    }
+                )
+            elif isinstance(item, CanvasTable):
+                path_obj = Path(item.path)
+                df = pd.read_pickle(path_obj)
+                html_table = df.to_html(classes="table", index=True)
+                items.append(
+                    {
+                        "file_name": path_obj.name,
+                        "file_type": "table",
+                        "content": html_table,
+                    }
+                )
+            elif isinstance(item, CanvasThought):
+                items.append(
+                    {
+                        "file_type": "thought",
+                        "content": item._thought,
+                    }
+                )
+            elif isinstance(item, CanvasCode):
+                items.append(
+                    {
+                        "file_type": "code",
+                        "content": item._code,
+                    }
+                )
+        return jsonify({"items": items, "total": len(analysis_items)})
+    except Exception as e:
+        flask_app.logger.error(f"Error retrieving incremental analysis: {str(e)}")
+        return jsonify({"items": [], "total": index})
+
+
 @flask_app.route("/analysis/file/<filename>", methods=["GET"])
 def serve_file(filename):
     """
@@ -185,7 +269,7 @@ def download_transcript():
             400,
         )
     try:
-        transcript = agent.get_transcript()  # returns str
+        transcript = agent.get_transcript()
         buf = BytesIO(transcript.encode("utf-8"))
         buf.seek(0)
         return send_file(
@@ -260,7 +344,7 @@ class ChatDA_UserInterface:
             "tools_only": tools_only,
             "multimodal": multimodal,
         }
-        # remove None key-value pairs
+
         chatda_kwargs = {k: v for k, v in chatda_kwargs.items() if v is not None}
         self.flask_app = flask_app
 
@@ -278,4 +362,4 @@ class ChatDA_UserInterface:
         debug : bool
             If True, the app runs in debug mode.
         """
-        self.flask_app.run(host=host, debug=debug, port=port)
+        self.flask_app.run(host=host, debug=debug, port=port, threaded=True)

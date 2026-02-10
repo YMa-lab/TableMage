@@ -72,6 +72,23 @@ class DataHandler:
         df_train[bool_cols] = df_train[bool_cols].astype(int)
         df_test[bool_cols] = df_test[bool_cols].astype(int)
 
+        # normalize boolean-like string values in object columns
+        for col in df_train.select_dtypes(include=["object"]).columns:
+            df_train[col] = df_train[col].apply(
+                lambda x: (
+                    x.lower()
+                    if isinstance(x, str) and x.lower() in ("true", "false")
+                    else x
+                )
+            )
+            df_test[col] = df_test[col].apply(
+                lambda x: (
+                    x.lower()
+                    if isinstance(x, str) and x.lower() in ("true", "false")
+                    else x
+                )
+            )
+
         # verify and set the original DataFrames
         self._verify_input_dfs(df_train, df_test)
 
@@ -1504,10 +1521,18 @@ class DataHandler:
 
         for var in vars:
             self._working_df_train[var] = self._working_df_train[var].apply(
-                lambda x: str(x) if pd.notna(x) else np.nan
+                lambda x: (
+                    (str(x).lower() if isinstance(x, bool) else str(x))
+                    if pd.notna(x)
+                    else np.nan
+                )
             )
             self._working_df_test[var] = self._working_df_test[var].apply(
-                lambda x: str(x) if pd.notna(x) else np.nan
+                lambda x: (
+                    (str(x).lower() if isinstance(x, bool) else str(x))
+                    if pd.notna(x)
+                    else np.nan
+                )
             )
 
         if self._verbose:
@@ -1591,7 +1616,13 @@ class DataHandler:
 
         # force categorical vars to be strings
         for var in categorical_vars:
-            df[var] = df[var].apply(lambda x: str(x) if pd.notna(x) else np.nan)
+            df[var] = df[var].apply(
+                lambda x: (
+                    (str(x).lower() if isinstance(x, bool) else str(x))
+                    if pd.notna(x)
+                    else np.nan
+                )
+            )
 
         all_vars = df.columns.to_list()
 
