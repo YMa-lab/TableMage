@@ -55,7 +55,7 @@ def use_agents():
 
 __all__ = ["Analyzer", "ml", "options", "fs", "use_agents"]
 
-__version__ = "0.1.0-alpha.1"
+__version__ = "0.1.0-dev"
 __author__ = "Andrew Yang"
 __email__ = "andrew_j_yang@brown.edu"
 __license__ = "BSD-3-Clause"
