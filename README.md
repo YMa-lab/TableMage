@@ -33,8 +33,8 @@ Please read the demo available on [readthedocs](https://tablemage.readthedocs.io
 
 ## Updates
 
-- February 2026: Our paper on ChatDA has been published in *npj Artificial Intelligence*! We are working TableMage's v0.1.0 release.
-- December 2025: We have released a preprint TableMage's ChatDA agent on *medRxiv*!
+- February 2026: Our paper on ChatDA has been published in *npj Artificial Intelligence*! We are working on TableMage's v0.1.0 release. Help us out by reporting bugs in Issues.
+- December 2025: We have released a preprint on TableMage's ChatDA agent on *medRxiv*!
 - February 2025: We have released an alpha version of TableMage on PyPI!
 
 ## Citation
