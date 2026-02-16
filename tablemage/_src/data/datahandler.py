@@ -72,20 +72,28 @@ class DataHandler:
         df_train[bool_cols] = df_train[bool_cols].astype(int)
         df_test[bool_cols] = df_test[bool_cols].astype(int)
 
-        # normalize boolean-like string values in object columns
+        # normalize boolean-like values in object columns
         for col in df_train.select_dtypes(include=["object"]).columns:
             df_train[col] = df_train[col].apply(
                 lambda x: (
-                    x.lower()
-                    if isinstance(x, str) and x.lower() in ("true", "false")
-                    else x
+                    str(x).lower()
+                    if isinstance(x, bool)
+                    else (
+                        x.lower()
+                        if isinstance(x, str) and x.lower() in ("true", "false")
+                        else x
+                    )
                 )
             )
             df_test[col] = df_test[col].apply(
                 lambda x: (
-                    x.lower()
-                    if isinstance(x, str) and x.lower() in ("true", "false")
-                    else x
+                    str(x).lower()
+                    if isinstance(x, bool)
+                    else (
+                        x.lower()
+                        if isinstance(x, str) and x.lower() in ("true", "false")
+                        else x
+                    )
                 )
             )
 

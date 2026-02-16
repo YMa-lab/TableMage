@@ -570,7 +570,6 @@ class DataEmitter:
             self._numeric_vars,
             self._categorical_to_categories,
         ) = self._compute_categorical_numeric_vars(self._working_df_train)
-        # Add the new feature to the scalers dictionary
         if feature_name not in self._numeric_var_to_scalers:
             self._numeric_var_to_scalers[feature_name] = []
         return None
@@ -1331,7 +1330,13 @@ class DataEmitter:
         if X is not None:
             for var in vars:
                 if X is not None:
-                    X[var] = X[var].apply(lambda x: str(x) if pd.notna(x) else np.nan)
+                    X[var] = X[var].apply(
+                        lambda x: (
+                            (str(x).lower() if isinstance(x, bool) else str(x))
+                            if pd.notna(x)
+                            else np.nan
+                        )
+                    )
             (
                 self._categorical_vars,
                 self._numeric_vars,
@@ -1343,10 +1348,18 @@ class DataEmitter:
             if var not in self._working_df_train.columns:
                 raise ValueError(f"Invalid variable name: {var}.")
             self._working_df_train[var] = self._working_df_train[var].apply(
-                lambda x: str(x) if pd.notna(x) else np.nan
+                lambda x: (
+                    (str(x).lower() if isinstance(x, bool) else str(x))
+                    if pd.notna(x)
+                    else np.nan
+                )
             )
             self._working_df_test[var] = self._working_df_test[var].apply(
-                lambda x: str(x) if pd.notna(x) else np.nan
+                lambda x: (
+                    (str(x).lower() if isinstance(x, bool) else str(x))
+                    if pd.notna(x)
+                    else np.nan
+                )
             )
 
         (
