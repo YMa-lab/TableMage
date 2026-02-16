@@ -11,6 +11,7 @@ def compute_weights_from_propensity_scores(
     estimand: Literal["ate", "att"],
     propensity_scores: pd.Series,
     treatment: pd.Series,
+    clip_bounds: tuple[float, float] = (1e-6, 1 - 1e-6),
 ) -> pd.Series:
     """Computes the weights for the inverse propensity weighting (IPW) estimator.
 
@@ -26,6 +27,11 @@ def compute_weights_from_propensity_scores(
     treatment : pd.Series
         The treatment indicator variable.
 
+    clip_bounds : tuple[float, float]
+        Lower and upper bounds for clipping propensity scores to avoid
+        extreme weights from near-zero or near-one scores.
+        Default is (1e-6, 1 - 1e-6).
+
     Returns
     -------
     pd.Series
@@ -37,6 +43,11 @@ def compute_weights_from_propensity_scores(
             "Indices for propensity_scores and treatment must be the same."
         )
 
+    # clip propensity scores to avoid extreme weights
+    propensity_scores = propensity_scores.clip(
+        lower=clip_bounds[0], upper=clip_bounds[1]
+    )
+
     # initialize output series as zeros
     output = pd.Series(0.0, index=propensity_scores.index)
 
@@ -46,9 +57,6 @@ def compute_weights_from_propensity_scores(
 
     if estimand == "ate":
         # compute weights for the ATE
-
-        # similar to ifelse(
-        # output$treatment == 1, 1 / predictions, 1 / (1 - predictions))
         output.loc[idx_for_treatment] = 1 / propensity_scores.loc[idx_for_treatment]
         output.loc[idx_for_control] = 1 / (1 - propensity_scores.loc[idx_for_control])
 
@@ -92,6 +100,8 @@ def _single_ipw_estimator(
     )
     propensity_score_estimator.fit()
     e_numpy = propensity_score_estimator._train_scorer._y_pred_score
+    # clip propensity scores to avoid extreme weights
+    e_numpy = np.clip(e_numpy, 1e-6, 1 - 1e-6)
     Y_numpy = Y_series.to_numpy()
     A_numpy = A_series.to_numpy()
 
@@ -153,17 +163,18 @@ def compute_bootstrapped_ipw_estimator(
     Y_series_temp = Y_series.reset_index(drop=True)
     A_series_temp = A_series.reset_index(drop=True)
 
-    def bootstrap_sample(idx, seed):
-        idx = idx + 1
-        if idx % 20 == 0:
+    def bootstrap_sample(iteration, seed):
+        iteration_1based = iteration + 1
+        if iteration_1based % 20 == 0:
             print_wrapped(
-                f"IPW estimator bootstrap sample {idx}/{n_bootstraps}", type="UPDATE"
+                f"IPW estimator bootstrap sample {iteration_1based}/{n_bootstraps}",
+                type="UPDATE",
             )
-        np.random.seed(seed)
-        idx = np.random.choice(X_df_temp.index, size=len(X_df_temp), replace=True)
-        X_indexed = X_df_temp.loc[idx].reset_index(drop=True)
-        Y_indexed = Y_series_temp.loc[idx].reset_index(drop=True)
-        A_indexed = A_series_temp.loc[idx].reset_index(drop=True)
+        rng = np.random.default_rng(seed)
+        sample_idx = rng.choice(len(X_df_temp), size=len(X_df_temp), replace=True)
+        X_indexed = X_df_temp.iloc[sample_idx].reset_index(drop=True)
+        Y_indexed = Y_series_temp.iloc[sample_idx].reset_index(drop=True)
+        A_indexed = A_series_temp.iloc[sample_idx].reset_index(drop=True)
         return _single_ipw_estimator(
             estimand=estimand,
             propensity_score_estimator=propensity_score_estimator,
@@ -172,9 +183,10 @@ def compute_bootstrapped_ipw_estimator(
             A_series=A_indexed,
         )
 
-    seeds = np.random.randint(0, 1000000, size=n_bootstraps)
+    seeds = np.random.SeedSequence().spawn(n_bootstraps)
     bootstrapped_effects = Parallel(n_jobs=-1)(
-        delayed(bootstrap_sample)(idx, seed) for idx, seed in enumerate(seeds)
+        delayed(bootstrap_sample)(iteration, seed)
+        for iteration, seed in enumerate(seeds)
     )
     bootstrap_std_error = np.std(bootstrapped_effects, ddof=1)
     return effect, bootstrap_std_error

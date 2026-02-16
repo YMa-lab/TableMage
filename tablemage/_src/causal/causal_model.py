@@ -115,9 +115,7 @@ class CausalModel:
         method: Literal[
             "naive", "outcome_regression", "ipw_weighted_regression", "ipw_estimator"
         ],
-        propensity_score_estimator: BaseC = LinearC(
-            type="no_penalty",
-        ),
+        propensity_score_estimator: BaseC | None = None,
         robust_se: Literal["nonrobust", "HC0", "HC1", "HC2", "HC3"] = "nonrobust",
         n_bootstraps: int = 100,
     ) -> CausalReport:
@@ -142,6 +140,8 @@ class CausalModel:
             The number of bootstraps to use for the IPW estimator, by default 100.
             Ignored if method is not "ipw_estimator".
         """
+        if propensity_score_estimator is None:
+            propensity_score_estimator = LinearC(type="no_penalty")
         if method == "naive":
             return self._naive()
         elif method == "outcome_regression":
@@ -164,9 +164,7 @@ class CausalModel:
     def estimate_att(
         self,
         method: Literal["ipw_weighted_regression", "ipw_estimator"],
-        propensity_score_estimator: BaseC = LinearC(
-            type="no_penalty",
-        ),
+        propensity_score_estimator: BaseC | None = None,
         robust_se: Literal["nonrobust", "HC0", "HC1", "HC2", "HC3"] = "nonrobust",
         n_bootstraps: int = 100,
     ) -> CausalReport:
@@ -190,6 +188,8 @@ class CausalModel:
             The number of bootstraps to use for the IPW estimator, by default 100.
             Ignored if method is not "ipw_estimator".
         """
+        if propensity_score_estimator is None:
+            propensity_score_estimator = LinearC(type="no_penalty")
         if method == "ipw_weighted_regression":
             return self._ipw_weighted_regression(
                 estimand="att",
@@ -265,9 +265,7 @@ class CausalModel:
     def _ipw_weighted_regression(
         self,
         estimand: Literal["ate", "att"],
-        propensity_score_estimator: BaseC = LinearC(
-            type="no_penalty",
-        ),
+        propensity_score_estimator: BaseC = None,
         robust_se: str = "nonrobust",
     ) -> CausalReport:
         """Inverse probability weighting (IPW)-weighted regression (WLS).
@@ -283,10 +281,12 @@ class CausalModel:
             by default LinearC(type="no_penalty") (logistic regression).
             Hyperparameters will be selected as specified in the model.
         """
+        if propensity_score_estimator is None:
+            propensity_score_estimator = LinearC(type="no_penalty")
         method_description = (
             "Inverse probability weighting (IPW)-weighted regression (WLS). "
             "Weights units via the inverse of their propensity scores. "
-            "Uses logistic regression to estimate the propensity scores."
+            "Uses the specified classifier to estimate the propensity scores."
         )
 
         emitter = self._emitter
@@ -331,9 +331,7 @@ class CausalModel:
     def _ipw_estimator(
         self,
         estimand: Literal["ate", "att"],
-        propensity_score_estimator: BaseC = LinearC(
-            type="no_penalty",
-        ),
+        propensity_score_estimator: BaseC = None,
         n_bootstraps: int = 1000,
     ) -> CausalReport:
         """Estimates the average treatment effect (ATE) using the IPW estimator.
