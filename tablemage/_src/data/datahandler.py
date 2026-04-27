@@ -3,7 +3,12 @@ import numpy as np
 from typing import Literal
 from copy import deepcopy
 from sklearn.impute import KNNImputer, SimpleImputer
-from sklearn.model_selection import StratifiedKFold, KFold
+from sklearn.model_selection import (
+    StratifiedKFold,
+    KFold,
+    GroupKFold,
+    BaseCrossValidator,
+)
 from sklearn.utils._testing import ignore_warnings
 from ..display.print_utils import (
     print_wrapped,
@@ -417,11 +422,22 @@ class DataHandler:
         n_folds: int = 5,
         shuffle: bool = True,
         random_state: int = 42,
+        groups: "str | pd.Series | None" = None,
+        cv: "BaseCrossValidator | None" = None,
     ) -> list[DataEmitter]:
         """Returns a list of DataEmitter objects for cross-validation.
-        DataEmitter objects are built from KFold
-        (StratifiedKFold if target is categorical) applied to
+        DataEmitter objects are built from a CV splitter applied to
         the working train DataFrame.
+
+        Splitter selection:
+        - If ``cv`` is provided, it is used directly. ``groups`` is forwarded
+          to ``cv.split(...)`` so grouped splitters (e.g. ``GroupKFold``,
+          ``GroupShuffleSplit``) work transparently.
+        - Else if ``groups`` is provided, ``GroupKFold(n_splits=n_folds)``
+          is used. (``GroupKFold`` ignores ``shuffle`` and ``random_state``.)
+        - Otherwise the historical behavior applies: ``StratifiedKFold`` for
+          categorical targets (with ``KFold`` fallback on failure), else
+          ``KFold``.
 
         Parameters
         ----------
@@ -432,20 +448,32 @@ class DataHandler:
             Names of the predictor variables.
 
         n_folds : int
-            Default: 5. Number of folds.
+            Default: 5. Number of folds. Ignored when ``cv`` is provided.
 
         shuffle : bool
-            Default: True. Whether to shuffle the data.
+            Default: True. Whether to shuffle the data. Ignored when
+            ``cv`` is provided or when ``groups`` is set.
 
         random_state : int
-            Default: 42. Random state for the
-            KFold/StratifiedKFold. Ignored if shuffle is False.
+            Default: 42. Random state for the KFold/StratifiedKFold.
+            Ignored if shuffle is False, if ``cv`` is provided, or
+            when ``groups`` is set.
+
+        groups : str | pd.Series | None
+            Default: None. Group labels for grouped cross-validation
+            (e.g. patient ids). If a string, it is interpreted as a
+            column name in the working train DataFrame. If a Series, it
+            must have the same length as the working train DataFrame.
+
+        cv : BaseCrossValidator | None
+            Default: None. A custom sklearn cross-validator. When
+            provided, it overrides the default splitter selection.
 
         Returns
         -------
         list[DataEmitter]
         """
-        if n_folds < 2:
+        if n_folds < 2 and cv is None:
             raise ValueError("n_folds must be at least 2.")
 
         if y_var not in self._working_df_train.columns:
@@ -454,81 +482,95 @@ class DataHandler:
             if var not in self._working_df_train.columns:
                 raise ValueError(f"Invalid variable name: {var}.")
 
-        use_stratified = False
-        if y_var in self._orig_df_train.columns:
-            if self._orig_df_train[y_var].dtype in ["object", "category", "bool"]:
-                use_stratified = True
-        if use_stratified:
-            try:
-                if shuffle:
-                    kf = StratifiedKFold(
-                        n_splits=n_folds, random_state=random_state, shuffle=True
+        groups_array = None
+        if groups is not None:
+            if isinstance(groups, str):
+                if groups not in self._orig_df_train.columns:
+                    raise ValueError(
+                        f"groups column {groups!r} not found in train DataFrame."
                     )
-                else:
-                    kf = StratifiedKFold(n_splits=n_folds, shuffle=False)
-
-                out = []
-                for train_index, test_index in kf.split(
-                    self._orig_df_train, self._orig_df_train[y_var]
-                ):
-                    df_train = self._orig_df_train.iloc[train_index]
-                    df_test = self._orig_df_train.iloc[test_index]
-                    out.append(
-                        DataEmitter(
-                            df_train,
-                            df_test,
-                            y_var,
-                            X_vars,
-                            self._preprocess_step_tracer,
-                        )
+                groups_array = self._orig_df_train[groups].to_numpy()
+            else:
+                if len(groups) != len(self._orig_df_train):
+                    raise ValueError(
+                        "groups Series length does not match train DataFrame length."
                     )
-                return out
+                groups_array = (
+                    pd.Series(groups).reindex(self._orig_df_train.index).to_numpy()
+                )
 
-            except ValueError as e:
+        y_array = (
+            self._orig_df_train[y_var].to_numpy()
+            if y_var in self._orig_df_train.columns
+            else None
+        )
+
+        if cv is not None:
+            kf = cv
+            split_iter = kf.split(self._orig_df_train, y_array, groups_array)
+        elif groups_array is not None:
+            if (not shuffle) or random_state != 42:
                 if self._verbose:
                     print_wrapped(
-                        f"StratifiedKFold failed: {e}. Using KFold instead.",
+                        "GroupKFold ignores shuffle and random_state.",
                         type="WARNING",
                     )
-                use_stratified = False
+            kf = GroupKFold(n_splits=n_folds)
+            split_iter = kf.split(self._orig_df_train, y_array, groups_array)
+        else:
+            use_stratified = False
+            if y_var in self._orig_df_train.columns:
+                if self._orig_df_train[y_var].dtype in ["object", "category", "bool"]:
+                    use_stratified = True
+            if use_stratified:
+                try:
+                    if shuffle:
+                        kf = StratifiedKFold(
+                            n_splits=n_folds,
+                            random_state=random_state,
+                            shuffle=True,
+                        )
+                    else:
+                        kf = StratifiedKFold(n_splits=n_folds, shuffle=False)
+                    split_iter = list(kf.split(self._orig_df_train, y_array))
+                except ValueError as e:
+                    if self._verbose:
+                        print_wrapped(
+                            f"StratifiedKFold failed: {e}. Using KFold instead.",
+                            type="WARNING",
+                        )
+                    if shuffle:
+                        kf = KFold(
+                            n_splits=n_folds,
+                            random_state=random_state,
+                            shuffle=True,
+                        )
+                    else:
+                        kf = KFold(n_splits=n_folds, shuffle=False)
+                    split_iter = kf.split(self._orig_df_train)
+            else:
                 if shuffle:
                     kf = KFold(
                         n_splits=n_folds, random_state=random_state, shuffle=True
                     )
                 else:
                     kf = KFold(n_splits=n_folds, shuffle=False)
+                split_iter = kf.split(self._orig_df_train)
 
-                out = []
-                for train_index, test_index in kf.split(self._orig_df_train):
-                    df_train = self._orig_df_train.iloc[train_index]
-                    df_test = self._orig_df_train.iloc[test_index]
-                    out.append(
-                        DataEmitter(
-                            df_train,
-                            df_test,
-                            y_var,
-                            X_vars,
-                            self._preprocess_step_tracer,
-                        )
-                    )
-                return out
-
-        else:
-            if shuffle:
-                kf = KFold(n_splits=n_folds, random_state=random_state, shuffle=True)
-            else:
-                kf = KFold(n_splits=n_folds, shuffle=False)
-
-            out = []
-            for train_index, test_index in kf.split(self._orig_df_train):
-                df_train = self._orig_df_train.iloc[train_index]
-                df_test = self._orig_df_train.iloc[test_index]
-                out.append(
-                    DataEmitter(
-                        df_train, df_test, y_var, X_vars, self._preprocess_step_tracer
-                    )
+        out = []
+        for train_index, test_index in split_iter:
+            df_train = self._orig_df_train.iloc[train_index]
+            df_test = self._orig_df_train.iloc[test_index]
+            out.append(
+                DataEmitter(
+                    df_train,
+                    df_test,
+                    y_var,
+                    X_vars,
+                    self._preprocess_step_tracer,
                 )
-            return out
+            )
+        return out
 
     def is_binary(self, var: str, is_numeric: bool = False) -> bool:
         """Checks if a given variable is binary (i.e., it only has two unique values).

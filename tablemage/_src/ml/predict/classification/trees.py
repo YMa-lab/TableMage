@@ -128,7 +128,7 @@ class TreesC(BaseC):
                     "max_depth": CategoricalDistribution([3, 6, 12, None]),
                     "min_samples_split": FloatDistribution(0.1, 0.5),
                     "min_samples_leaf": FloatDistribution(0.1, 0.5),
-                    "max_features": CategoricalDistribution(["sqrt", "log2", "auto"]),
+                    "max_features": CategoricalDistribution(["sqrt", "log2"]),
                 }
 
         elif type == "random_forest":
@@ -210,7 +210,7 @@ class TreesC(BaseC):
                     "min_samples_split": FloatDistribution(0.1, 0.5),
                     "min_samples_leaf": FloatDistribution(0.1, 0.5),
                     "max_depth": IntDistribution(3, 9, step=2),
-                    "max_features": CategoricalDistribution(["sqrt", "log2", "auto"]),
+                    "max_features": CategoricalDistribution(["sqrt", "log2"]),
                 }
 
         elif type == "xgboost":

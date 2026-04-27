@@ -148,7 +148,10 @@ class LassoFSC(BaseFSC):
 
         self._model.fit(X=X_train.to_numpy(), y=y_train.to_numpy())
         selector = SelectFromModel(
-            estimator=self._model, prefit=True, max_features=self._max_n_features
+            estimator=self._model,
+            prefit=True,
+            max_features=self._max_n_features,
+            threshold=1e-5,
         )
         selector.fit(X=X_train, y=y_train)
 

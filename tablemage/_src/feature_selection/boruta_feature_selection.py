@@ -200,5 +200,7 @@ class BorutaFSC(BaseFSC):
                 "Boruta will vote for all features.",
                 type="WARNING",
             )
+            self._support = np.ones_like(self._support, dtype=bool)
+            self._selected_features = self._all_features.copy()
 
         return self._all_features, self._selected_features, self._support

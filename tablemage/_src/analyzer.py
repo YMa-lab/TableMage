@@ -1,6 +1,6 @@
 import pandas as pd
 from typing import Literal
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, BaseCrossValidator
 from .ml.predict import (
     BaseR,
     MLRegressionReport,
@@ -439,8 +439,9 @@ class Analyzer:
         predictors: list[str] | None = None,
         feature_selectors: list[BaseFSR] | None = None,
         max_n_features: int | None = None,
-        outer_cv: int | None = None,
+        outer_cv: int | BaseCrossValidator | None = None,
         outer_cv_seed: int = 42,
+        groups: str | pd.Series | None = None,
     ) -> MLRegressionReport:
         """Conducts a comprehensive regression ML model benchmarking exercise. \
         Observations with missing data will be dropped.
@@ -469,11 +470,20 @@ class Analyzer:
             Ignored if feature_selectors is None. \
             If None, then all features with at least 50% support are selected.
 
-        outer_cv : int
-            Default: None. If not None, reports training scores via nested k-fold CV.
+        outer_cv : int | BaseCrossValidator | None
+            Default: None. If an int, reports training scores via nested \
+            k-fold CV with that many folds. If a sklearn \
+            ``BaseCrossValidator`` instance, uses it directly \
+            (e.g. ``GroupKFold``, ``GroupShuffleSplit``).
 
         outer_cv_seed : int
             Default: 42. The random seed for the outer cross validation loop.
+
+        groups : str | pd.Series | None
+            Default: None. Group labels for grouped cross-validation \
+            (e.g. patient ids). If a string, it is interpreted as a \
+            column name in the train DataFrame. When provided with an \
+            int ``outer_cv``, ``GroupKFold`` is used.
 
         Returns
         -------
@@ -493,6 +503,7 @@ class Analyzer:
             max_n_features=max_n_features,
             outer_cv=outer_cv,
             outer_cv_seed=outer_cv_seed,
+            groups=groups,
             verbose=self._verbose,
         )
 
@@ -504,8 +515,9 @@ class Analyzer:
         predictors: list[str] | None = None,
         feature_selectors: list[BaseFSC] | None = None,
         max_n_features: int | None = None,
-        outer_cv: int | None = None,
+        outer_cv: int | BaseCrossValidator | None = None,
         outer_cv_seed: int = 42,
+        groups: str | pd.Series | None = None,
     ) -> MLClassificationReport:
         """Conducts a comprehensive classification ML model benchmarking exercise. \
         Observations with missing data will be dropped.
@@ -535,13 +547,21 @@ class Analyzer:
             Ignored if feature_selectors is None. \
             If None, then all features with at least 50% support are selected. \
 
-        outer_cv : int
+        outer_cv : int | BaseCrossValidator | None
             Default: None.
-            If not None, reports training scores via nested k-fold CV.
+            If an int, reports training scores via nested k-fold CV with \
+            that many folds. If a sklearn ``BaseCrossValidator`` instance, \
+            uses it directly (e.g. ``GroupKFold``, ``GroupShuffleSplit``).
 
         outer_cv_seed : int
             Default: 42.
             The random seed for the outer cross validation loop.
+
+        groups : str | pd.Series | None
+            Default: None. Group labels for grouped cross-validation \
+            (e.g. patient ids). If a string, it is interpreted as a \
+            column name in the train DataFrame. When provided with an \
+            int ``outer_cv``, ``GroupKFold`` is used.
 
         Returns
         -------
@@ -561,6 +581,7 @@ class Analyzer:
             max_n_features=max_n_features,
             outer_cv=outer_cv,
             outer_cv_seed=outer_cv_seed,
+            groups=groups,
             verbose=self._verbose,
         )
 

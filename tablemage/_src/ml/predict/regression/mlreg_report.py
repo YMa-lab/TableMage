@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from typing import Literal
 import warnings
+from sklearn.model_selection import BaseCrossValidator
 from .base import BaseR
 from ....data.datahandler import DataHandler
 from ....metrics.visualization import plot_obs_vs_pred
@@ -255,8 +256,9 @@ class MLRegressionReport:
         predictors: list[str],
         feature_selectors: list[BaseFSR] | None = None,
         max_n_features: int | None = None,
-        outer_cv: int | None = None,
+        outer_cv: int | BaseCrossValidator | None = None,
         outer_cv_seed: int = 42,
+        groups: str | pd.Series | None = None,
         verbose: bool = True,
     ):
         """MLRegressionReport.
@@ -286,12 +288,22 @@ class MLRegressionReport:
             Maximum number of predictors to utilize. Ignored if feature_selectors
             is None.
 
-        outer_cv : int | None
+        outer_cv : int | BaseCrossValidator | None
             Default: None.
-            If not None, reports training scores via nested k-fold CV.
+            If an int, reports training scores via nested k-fold CV with
+            that many folds. If a sklearn ``BaseCrossValidator`` instance,
+            uses it directly (e.g. ``GroupKFold``, ``GroupShuffleSplit``).
 
         outer_cv_seed : int
-            Default: 42. The random seed for the outer cross validation loop.
+            Default: 42. The random seed for the outer cross validation
+            loop. Ignored when ``outer_cv`` is a ``BaseCrossValidator``
+            or when ``groups`` is provided.
+
+        groups : str | pd.Series | None
+            Default: None. Group labels for grouped cross-validation
+            (e.g. patient ids). If a string, it is interpreted as a
+            column name in the working train DataFrame. When provided
+            with an int ``outer_cv``, ``GroupKFold`` is used.
 
         verbose : bool
             Default: True. If True, prints progress.
@@ -342,13 +354,24 @@ class MLRegressionReport:
         self._emitters = None
 
         if outer_cv is not None:
-            self._emitters = datahandler.kfold_emitters(
-                y_var=target,
-                X_vars=predictors,
-                n_folds=outer_cv,
-                shuffle=True,
-                random_state=outer_cv_seed,
-            )
+            if isinstance(outer_cv, BaseCrossValidator):
+                self._emitters = datahandler.kfold_emitters(
+                    y_var=target,
+                    X_vars=predictors,
+                    shuffle=True,
+                    random_state=outer_cv_seed,
+                    groups=groups,
+                    cv=outer_cv,
+                )
+            else:
+                self._emitters = datahandler.kfold_emitters(
+                    y_var=target,
+                    X_vars=predictors,
+                    n_folds=outer_cv,
+                    shuffle=True,
+                    random_state=outer_cv_seed,
+                    groups=groups,
+                )
             if feature_selectors is not None:
                 for emitter in self._emitters:
                     fold_selection_report = VotingSelectionReport(
@@ -445,6 +468,10 @@ class MLRegressionReport:
         """Returns a DataFrame containing the metrics for
         all models on the specified data.
 
+        The returned DataFrame is oriented with metrics as **rows**
+        (e.g. 'rmse', 'mae', 'r2') and model identifiers as **columns**.
+        To iterate per-model, transpose the result with ``metrics(...).T``.
+
         Parameters
         ----------
         dataset : Literal['train', 'test', 'both']
@@ -453,6 +480,7 @@ class MLRegressionReport:
         Returns
         -------
         pd.DataFrame
+            Rows are statistic names; columns are model identifiers.
         """
         if dataset == "train":
             return pd.concat(

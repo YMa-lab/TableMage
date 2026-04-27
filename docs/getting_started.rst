@@ -10,7 +10,7 @@ To install TableMage, follow these steps:
 
 .. code-block:: bash
 
-    git clone https://github.com/ajy25/TableMage.git
+    git clone https://github.com/YMa-lab/TableMage.git
     cd TableMage
     pip install .
 
